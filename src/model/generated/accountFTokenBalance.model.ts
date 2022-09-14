@@ -1,0 +1,31 @@
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
+import * as marshal from "./marshal"
+import {Account} from "./account.model"
+import {FToken} from "./fToken.model"
+
+@Entity_()
+export class AccountFTokenBalance {
+  constructor(props?: Partial<AccountFTokenBalance>) {
+    Object.assign(this, props)
+  }
+
+  @PrimaryColumn_()
+  id!: string
+
+  @Index_()
+  @ManyToOne_(() => Account, {nullable: true})
+  account!: Account
+
+  @Index_()
+  @ManyToOne_(() => FToken, {nullable: true})
+  token!: FToken
+
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  amount!: bigint
+
+  @Column_("int4", {nullable: false})
+  updatedAtBlock!: number
+
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  updatedAt!: bigint
+}

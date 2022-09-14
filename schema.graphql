@@ -1,0 +1,99 @@
+enum ContractStandard {
+    ERC20
+    ERC721
+    ERC1155
+}
+
+enum TransferType {
+    TRANSFER
+    MINT
+    BURN
+}
+
+enum TransferDirection {
+    From
+    To
+}
+
+type NfToken @entity {
+    id: ID!
+    owner: Account
+    name: String
+    symbol: String
+    uri: String
+    transfers: [NftTransfer!] @derivedFrom(field: "token")
+    amount: BigInt!
+    contract: Contract
+}
+
+type FToken @entity {
+    id: ID!
+    name: String @index
+    symbol: String @index
+    decimals: Int
+    transfers: [FtTransfer!] @derivedFrom(field: "token")
+}
+
+type Account @entity {
+    id: ID!
+    ownedTokens: [NfToken!] @derivedFrom(field: "owner")
+    nftTransfers: [AccountNftTransfer!] @derivedFrom(field: "account")
+    ftTransfers: [AccountFtTransfer!] @derivedFrom(field: "account")
+    balancesFToken: [AccountFTokenBalance]! @derivedFrom(field: "account")
+}
+
+type AccountFTokenBalance @entity {
+    id: ID! # <account_id>-<token_id>
+    account: Account!
+    token: FToken!
+    amount: BigInt!
+    updatedAtBlock: Int!
+    updatedAt: BigInt!
+}
+
+type Contract @entity {
+    id: ID!
+    contractStandard: ContractStandard! @index
+    mintedTokens: [NfToken!] @derivedFrom(field: "contract")
+    createdAtBlock: BigInt!
+    createdAt: BigInt!
+}
+
+type NftTransfer @entity {
+    id: ID!
+    token: NfToken!
+    from: Account
+    to: Account
+    amount: BigInt
+    timestamp: BigInt!
+    block: Int!
+    transactionHash: String!
+    transferType: TransferType
+}
+
+type FtTransfer @entity {
+    id: ID!
+    token: FToken!
+    from: Account
+    to: Account
+    amount: BigInt
+    timestamp: BigInt!
+    block: Int!
+    transactionHash: String!
+    transferType: TransferType
+}
+
+# entity for linking account and transfer
+type AccountNftTransfer @entity {
+    id: ID!
+    transfer: NftTransfer
+    account: Account!
+    direction: TransferDirection
+}
+
+type AccountFtTransfer @entity {
+    id: ID!
+    transfer: FtTransfer
+    account: Account!
+    direction: TransferDirection
+}

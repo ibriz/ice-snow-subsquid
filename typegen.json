@@ -1,0 +1,7 @@
+{
+  "outDir": "src/types",
+  "specVersions": "arcticVersions.json",
+  "events": ["EVM.Log"],
+  "calls": [],
+  "storage": []
+}
