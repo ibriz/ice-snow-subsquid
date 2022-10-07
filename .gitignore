@@ -1,5 +1,6 @@
 /node_modules
 /lib
+/docker_data
 
 /**Versions.json
 /**Versions.jsonl

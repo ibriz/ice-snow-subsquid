@@ -16,11 +16,16 @@ import {
     handleErc1155TransferBatch,
 } from "./transferEvent";
 
+const archiveHost = process.env.ARCHIVE_HOST || "localhost";
+const archivePort = process.env.ARCHIVE_PORT
+    ? parseInt(process.env.ARCHIVE_PORT)
+    : 8888;
+
 const processor = new SubstrateBatchProcessor()
     .setBatchSize(10)
     .setDataSource({
         chain: "wss://arctic-archive.icenetwork.io:9944",
-        archive: "http://localhost:8888/graphql",
+        archive: `http://${archiveHost}:${archivePort}/graphql`,
     })
     .addEvmLog("*", {
         filter: [

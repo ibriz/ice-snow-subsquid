@@ -2,20 +2,22 @@ services:
   db:
     image: postgres:14 # CockroachDB cluster might be a better fit for production deployment
     restart: always
-    # volumes:
-    #   - /var/lib/postgresql/data
+    volumes:
+      - ../docker_data/archive_data:/var/lib/postgresql/data
+    networks:
+      - ice-snow-subsquid
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: squid-archive
-    ports:
-      - "12345:5432"
 
   ingest:
     depends_on:
       - db
     restart: on-failure
     image: subsquid/substrate-ingest:firesquid
+    networks:
+      - ice-snow-subsquid
     command:
       [
         "-e",
@@ -43,6 +45,8 @@ services:
         "--database-url",
         "postgres://postgres:postgres@db:5432/squid-archive"
       ]
+    networks:
+      - ice-snow-subsquid
     ports:
       - "8888:8000"
 
@@ -60,3 +64,7 @@ services:
       DB_PASS: "postgres"
     ports:
       - "4444:3000"
+
+networks:
+  ice-snow-subsquid:
+    driver: bridge

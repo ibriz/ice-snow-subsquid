@@ -1,11 +1,55 @@
 version: "3"
 
 services:
-  db:
+  squid-db:
     container_name: subsquid_db
     image: postgres:14
     environment:
-      POSTGRES_DB: squid
-      POSTGRES_PASSWORD: squid
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - ./docker_data/subsquid_data:/var/lib/postgresql/data
+    networks:
+      - archive_ice-snow-subsquid
     ports:
       - "${DB_PORT}:5432"
+
+  squid-processor:
+    container_name: squid_processor
+    build:
+      context: .
+      target: processor
+    restart: on-failure
+    environment:
+      - ARCHIVE_HOST
+      - ARCHIVE_PORT
+      - DB_HOST
+      - DB_NAME
+      - DB_PASS
+    depends_on:
+      - squid-db
+    networks:
+      - archive_ice-snow-subsquid
+    ports:
+      - "${PROCESSOR_PROMETHEUS_PORT}:3000"
+
+  squid-graphql:
+    container_name: squid_graphql
+    build:
+      context: .
+      target: query-node
+    depends_on:
+      - squid-db
+      - squid-processor
+    environment:
+      - DB_HOST
+      - DB_NAME
+      - DB_PASS
+    networks:
+      - archive_ice-snow-subsquid
+    ports:
+      - "${GQL_PORT}:4000"
+
+networks:
+  archive_ice-snow-subsquid:
+    external: true

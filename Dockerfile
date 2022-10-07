@@ -7,6 +7,7 @@ FROM node-with-gyp AS builder
 WORKDIR /squid
 ADD package.json .
 ADD package-lock.json .
+ADD run.sh .
 RUN npm ci
 ADD tsconfig.json .
 ADD src src
@@ -16,12 +17,14 @@ FROM node-with-gyp AS deps
 WORKDIR /squid
 ADD package.json .
 ADD package-lock.json .
+ADD run.sh .
 RUN npm ci --production
 
 FROM node AS squid
 WORKDIR /squid
 COPY --from=deps /squid/package.json .
 COPY --from=deps /squid/package-lock.json .
+COPY --from=deps /squid/run.sh .
 COPY --from=deps /squid/node_modules node_modules
 COPY --from=builder /squid/lib lib
 ADD db db
@@ -34,7 +37,7 @@ EXPOSE 4000
 
 
 FROM squid AS processor
-CMD ["npm", "run", "processor:start"]
+CMD ["sh", "run.sh"]
 
 
 FROM squid AS query-node
