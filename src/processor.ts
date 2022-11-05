@@ -15,6 +15,13 @@ import {
     handleErc20Transfer,
     handleErc1155TransferBatch,
 } from "./transferEvent";
+import {
+    ApprovalEvent,
+    handleErc1155ApprovalAll,
+    handleErc20Approval,
+    handleErc721Approval,
+    handleErc721ApprovalAll,
+} from "./approvalEvent";
 
 const archiveHost = process.env.ARCHIVE_HOST || "localhost";
 const archivePort = process.env.ARCHIVE_PORT
@@ -38,6 +45,10 @@ const processor = new SubstrateBatchProcessor()
                 erc1155.events[
                     "TransferBatch(address,address,address,uint256[],uint256[])"
                 ].topic,
+                erc20.events["Approval(address,address,uint256)"].topic,
+                erc721.events["Approval(address,address,uint256)"].topic,
+                // erc721.events["ApprovalForAll(address,address,bool)"].topic,
+                // erc1155.events["ApprovalForAll(address,address,bool)"].topic,
             ],
         ],
     });
@@ -47,6 +58,7 @@ export type Ctx = BatchContext<Store, Item>;
 
 processor.run(new TypeormDatabase(), async ctx => {
     const transfersData: TransferEvent[] = [];
+    const approvalsData: ApprovalEvent[] = [];
     for (let block of ctx.blocks) {
         for (let item of block.items) {
             if (item.name == "EVM.Log") {
@@ -91,11 +103,50 @@ processor.run(new TypeormDatabase(), async ctx => {
                         );
                         transfersData.push(...transfersBatch);
                         break;
+                    case erc20.events["Approval(address,address,uint256)"]
+                        .topic:
+                    case erc721.events["Approval(address,address,uint256)"]
+                        .topic:
+                        try {
+                            const approvals = await handleErc20Approval(
+                                block.header,
+                                item.event
+                            );
+                            approvalsData.push(...approvals);
+                        } catch (error) {
+                            try {
+                                const approvals = await handleErc721Approval(
+                                    block.header,
+                                    item.event
+                                );
+                                approvalsData.push(...approvals);
+                            } catch (error) {}
+                        }
+                    // case erc721.events["ApprovalForAll(address,address,bool)"]
+                    //     .topic:
+                    // case erc1155.events["ApprovalForAll(address,address,bool)"]
+                    //     .topic:
+                    //     try {
+                    //         const approvals = await handleErc721ApprovalAll(
+                    //             block.header,
+                    //             item.event
+                    //         );
+                    //         approvalsData.push(...approvals);
+                    //     } catch (error) {
+                    //         try {
+                    //             const approvals =
+                    //                 await handleErc1155ApprovalAll(
+                    //                     block.header,
+                    //                     item.event
+                    //                 );
+                    //             approvalsData.push(...approvals);
+                    //         } catch (error) {}
+                    //     }
                     default:
                 }
             }
         }
     }
-    console.log(transfersData);
+    console.log(approvalsData);
     await saveTransfers(ctx, transfersData);
 });

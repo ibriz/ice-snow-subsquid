@@ -1,4 +1,5 @@
 import { BigNumber } from "ethers";
+import { ApprovalEvent } from "../approvalEvent";
 import {
     Contract,
     ContractStandard,
@@ -11,6 +12,10 @@ import {
     AccountFtTransfer,
     TransferDirection,
     AccountFTokenBalance,
+    NftApproval,
+    FtApproval,
+    AccountNftApproval,
+    AccountFtApproval,
 } from "../model";
 import { Ctx } from "../processor";
 import { TransferEvent } from "../transferEvent";
@@ -33,6 +38,10 @@ export class EntityManager {
     public static accountNftTransfers: Set<AccountNftTransfer> = new Set();
     public static accountftTransfers: Set<AccountFtTransfer> = new Set();
     public static ftBalances: Map<string, AccountFTokenBalance> = new Map();
+    public static nftApprovals: Map<string, NftApproval> = new Map();
+    public static ftApproval: Map<string, FtApproval> = new Map();
+    public static accountNftApprovals: Set<AccountNftApproval> = new Set();
+    public static accountftApprovals: Set<AccountFtApproval> = new Set();
 
     private ctx: Ctx;
 
@@ -92,9 +101,10 @@ export class EntityManager {
     };
 
     getOrCreateNfToken = async (
-        transferData: TransferEvent,
+        transferData: TransferEvent | ApprovalEvent,
         contract: Contract,
-        owner: Account
+        owner: Account,
+        isTransfer: Boolean = true
     ): Promise<NfToken> => {
         const tokenId = getTokenId(
             transferData.contractAddress,
@@ -129,16 +139,19 @@ export class EntityManager {
                 amount: BigInt(0),
             });
         }
-        const transferType = getTransferType(
-            transferData.from,
-            transferData.to
-        );
-        token.owner = owner;
-        token.amount = getTokenTotalSupply(
-            token.amount,
-            BigInt(transferData.amount.toString()),
-            transferType
-        );
+
+        if (isTransfer && transferData.amount) {
+            const transferType = getTransferType(
+                transferData.from,
+                transferData.to
+            );
+            token.owner = owner;
+            token.amount = getTokenTotalSupply(
+                token.amount,
+                BigInt(transferData.amount.toString()),
+                transferType
+            );
+        }
         EntityManager.nfTokens.set(tokenId, token);
         return token;
     };
@@ -202,7 +215,7 @@ export class EntityManager {
     };
 
     getOrCreateFToken = async (
-        transferData: TransferEvent,
+        transferData: TransferEvent | ApprovalEvent,
         contract: Contract,
         owner: Account
     ): Promise<FToken> => {
@@ -344,5 +357,109 @@ export class EntityManager {
         }
         EntityManager.ftBalances.set(balanceId, accountBalance);
         return accountBalance;
+    };
+
+    createNftApproval = async (
+        approvalData: ApprovalEvent,
+        from: Account,
+        to: Account,
+        token: NfToken,
+        eventId: string
+    ): Promise<NftApproval> => {
+        const approvalId = `${eventId}-${approvalData.token}`;
+
+        let approval = EntityManager.nftApprovals.get(approvalId);
+        if (!approval) {
+            approval = await this.ctx.store.get(NftApproval, approvalId);
+            if (approval) {
+                EntityManager.nftApprovals.set(approvalId, approval);
+            }
+        }
+
+        if (!approval) {
+            console.log(`creating NFT approval ${approvalId}`);
+
+            approval = new NftApproval({
+                id: approvalId,
+                from,
+                to,
+                token,
+                timestamp: approvalData.timestamp,
+                block: approvalData.block,
+                transactionHash: approvalData.transactionHash,
+            });
+            EntityManager.nftApprovals.set(approvalId, approval);
+
+            const accountApprovalFrom = new AccountNftApproval({
+                id: `${approvalId}-${from.id}-${TransferDirection.From}`,
+                approval,
+                account: from,
+                direction: TransferDirection.From,
+            });
+            EntityManager.accountNftApprovals.add(accountApprovalFrom);
+
+            const accountApprovalTo = new AccountNftApproval({
+                id: `${approvalId}-${to.id}-${TransferDirection.To}`,
+                approval,
+                account: to,
+                direction: TransferDirection.To,
+            });
+            EntityManager.accountNftApprovals.add(accountApprovalTo);
+        }
+
+        return approval;
+    };
+
+    createFtApproval = async (
+        approvalData: ApprovalEvent,
+        from: Account,
+        to: Account,
+        token: FToken,
+        amount: BigNumber,
+        eventId: string
+    ): Promise<FtApproval> => {
+        const approvalId = eventId;
+
+        let approval = EntityManager.ftApproval.get(approvalId);
+        if (!approval) {
+            approval = await this.ctx.store.get(FtApproval, approvalId);
+            if (approval) {
+                EntityManager.ftApproval.set(approvalId, approval);
+            }
+        }
+
+        if (!approval) {
+            console.log(`creating FT approval ${approvalId}`);
+
+            approval = new FtApproval({
+                id: approvalId,
+                from,
+                to,
+                token,
+                amount: BigInt(amount.toString()),
+                timestamp: approvalData.timestamp,
+                block: approvalData.block,
+                transactionHash: approvalData.transactionHash,
+            });
+            EntityManager.ftApproval.set(approvalId, approval);
+
+            const accountApprovalFrom = new AccountFtApproval({
+                id: `${approvalId}-${from.id}-${TransferDirection.From}`,
+                approval,
+                account: from,
+                direction: TransferDirection.From,
+            });
+            EntityManager.accountftApprovals.add(accountApprovalFrom);
+
+            const accountApprovalTo = new AccountFtApproval({
+                id: `${approvalId}-${to.id}-${TransferDirection.To}`,
+                approval,
+                account: to,
+                direction: TransferDirection.To,
+            });
+            EntityManager.accountftApprovals.add(accountApprovalTo);
+        }
+
+        return Promise.resolve(new FtApproval());
     };
 }

@@ -2,11 +2,10 @@ import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, M
 import * as marshal from "./marshal"
 import {FToken} from "./fToken.model"
 import {Account} from "./account.model"
-import {TransferType} from "./_transferType"
 
 @Entity_()
-export class FtTransfer {
-  constructor(props?: Partial<FtTransfer>) {
+export class FtApproval {
+  constructor(props?: Partial<FtApproval>) {
     Object.assign(this, props)
   }
 
@@ -36,7 +35,4 @@ export class FtTransfer {
 
   @Column_("text", {nullable: false})
   transactionHash!: string
-
-  @Column_("varchar", {length: 8, nullable: true})
-  transferType!: TransferType | undefined | null
 }

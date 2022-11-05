@@ -1,5 +1,6 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, OneToMany as OneToMany_} from "typeorm"
 import {FtTransfer} from "./ftTransfer.model"
+import {FtApproval} from "./ftApproval.model"
 
 @Entity_()
 export class FToken {
@@ -23,4 +24,7 @@ export class FToken {
 
   @OneToMany_(() => FtTransfer, e => e.token)
   transfers!: FtTransfer[]
+
+  @OneToMany_(() => FtApproval, e => e.token)
+  approvals!: FtApproval[]
 }

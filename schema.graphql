@@ -22,6 +22,7 @@ type NfToken @entity {
     symbol: String
     uri: String
     transfers: [NftTransfer!] @derivedFrom(field: "token")
+    approvals: [NftApproval!] @derivedFrom(field: "token")
     amount: BigInt!
     contract: Contract
 }
@@ -32,6 +33,7 @@ type FToken @entity {
     symbol: String @index
     decimals: Int
     transfers: [FtTransfer!] @derivedFrom(field: "token")
+    approvals: [FtApproval!] @derivedFrom(field: "token")
 }
 
 type Account @entity {
@@ -39,16 +41,9 @@ type Account @entity {
     ownedTokens: [NfToken!] @derivedFrom(field: "owner")
     nftTransfers: [AccountNftTransfer!] @derivedFrom(field: "account")
     ftTransfers: [AccountFtTransfer!] @derivedFrom(field: "account")
+    nftApprovals: [AccountNftApproval!] @derivedFrom(field: "account")
+    ftApprovals: [AccountFtApproval!] @derivedFrom(field: "account")
     balancesFToken: [AccountFTokenBalance]! @derivedFrom(field: "account")
-}
-
-type AccountFTokenBalance @entity {
-    id: ID! # <account_id>-<token_id>
-    account: Account!
-    token: FToken!
-    amount: BigInt!
-    updatedAtBlock: Int!
-    updatedAt: BigInt!
 }
 
 type Contract @entity {
@@ -94,6 +89,51 @@ type AccountNftTransfer @entity {
 type AccountFtTransfer @entity {
     id: ID!
     transfer: FtTransfer
+    account: Account!
+    direction: TransferDirection
+}
+
+type AccountFTokenBalance @entity {
+    id: ID! # <account_id>-<token_id>
+    account: Account!
+    token: FToken!
+    amount: BigInt!
+    updatedAtBlock: Int!
+    updatedAt: BigInt!
+}
+
+type NftApproval @entity {
+    id: ID!
+    token: NfToken!
+    from: Account
+    to: Account
+    timestamp: BigInt!
+    block: Int!
+    transactionHash: String!
+}
+
+type FtApproval @entity {
+    id: ID!
+    token: FToken!
+    from: Account
+    to: Account
+    amount: BigInt
+    timestamp: BigInt!
+    block: Int!
+    transactionHash: String!
+}
+
+# entity for linking account and approval
+type AccountNftApproval @entity {
+    id: ID!
+    approval: NftApproval
+    account: Account!
+    direction: TransferDirection
+}
+
+type AccountFtApproval @entity {
+    id: ID!
+    approval: FtApproval
     account: Account!
     direction: TransferDirection
 }

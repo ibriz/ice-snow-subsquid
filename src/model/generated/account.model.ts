@@ -2,6 +2,8 @@ import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, O
 import {NfToken} from "./nfToken.model"
 import {AccountNftTransfer} from "./accountNftTransfer.model"
 import {AccountFtTransfer} from "./accountFtTransfer.model"
+import {AccountNftApproval} from "./accountNftApproval.model"
+import {AccountFtApproval} from "./accountFtApproval.model"
 import {AccountFTokenBalance} from "./accountFTokenBalance.model"
 
 @Entity_()
@@ -21,6 +23,12 @@ export class Account {
 
   @OneToMany_(() => AccountFtTransfer, e => e.account)
   ftTransfers!: AccountFtTransfer[]
+
+  @OneToMany_(() => AccountNftApproval, e => e.account)
+  nftApprovals!: AccountNftApproval[]
+
+  @OneToMany_(() => AccountFtApproval, e => e.account)
+  ftApprovals!: AccountFtApproval[]
 
   @OneToMany_(() => AccountFTokenBalance, e => e.account)
   balancesFToken!: AccountFTokenBalance[]

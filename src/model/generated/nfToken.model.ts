@@ -2,6 +2,7 @@ import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, M
 import * as marshal from "./marshal"
 import {Account} from "./account.model"
 import {NftTransfer} from "./nftTransfer.model"
+import {NftApproval} from "./nftApproval.model"
 import {Contract} from "./contract.model"
 
 @Entity_()
@@ -28,6 +29,9 @@ export class NfToken {
 
   @OneToMany_(() => NftTransfer, e => e.token)
   transfers!: NftTransfer[]
+
+  @OneToMany_(() => NftApproval, e => e.token)
+  approvals!: NftApproval[]
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   amount!: bigint

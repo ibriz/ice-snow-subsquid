@@ -13,11 +13,11 @@ export class AccountFTokenBalance {
   id!: string
 
   @Index_()
-  @ManyToOne_(() => Account, {nullable: true})
+  @ManyToOne_(() => Account, {nullable: false})
   account!: Account
 
   @Index_()
-  @ManyToOne_(() => FToken, {nullable: true})
+  @ManyToOne_(() => FToken, {nullable: false})
   token!: FToken
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})

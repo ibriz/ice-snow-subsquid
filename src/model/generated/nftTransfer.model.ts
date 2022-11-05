@@ -14,7 +14,7 @@ export class NftTransfer {
   id!: string
 
   @Index_()
-  @ManyToOne_(() => NfToken, {nullable: true})
+  @ManyToOne_(() => NfToken, {nullable: false})
   token!: NfToken
 
   @Index_()

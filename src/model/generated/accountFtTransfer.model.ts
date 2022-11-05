@@ -17,7 +17,7 @@ export class AccountFtTransfer {
   transfer!: FtTransfer | undefined | null
 
   @Index_()
-  @ManyToOne_(() => Account, {nullable: true})
+  @ManyToOne_(() => Account, {nullable: false})
   account!: Account
 
   @Column_("varchar", {length: 4, nullable: true})
