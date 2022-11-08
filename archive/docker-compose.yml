@@ -2,8 +2,8 @@ services:
   db:
     image: postgres:14 # CockroachDB cluster might be a better fit for production deployment
     restart: always
-    volumes:
-      - ../docker_data/archive_data:/var/lib/postgresql/data
+    # volumes:
+    #   - ../docker_data/archive_data:/var/lib/postgresql/data
     networks:
       - ice-snow-subsquid
     environment:
@@ -21,7 +21,7 @@ services:
     command:
       [
         "-e",
-        "wss://arctic-archive.icenetwork.io:9944",
+        "wss://snow-archive.icenetwork.io",
         "-c",
         "20", # allow up to 20 pending requests for the above endpoint (default is 5)
         # add another endpoint to increase archiving speed and reliability.

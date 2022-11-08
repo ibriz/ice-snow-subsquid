@@ -16,6 +16,7 @@ import {
     handleErc1155TransferBatch,
 } from "./transferEvent";
 
+
 const archiveHost = process.env.ARCHIVE_HOST || "localhost";
 const archivePort = process.env.ARCHIVE_PORT
     ? parseInt(process.env.ARCHIVE_PORT)
@@ -24,7 +25,7 @@ const archivePort = process.env.ARCHIVE_PORT
 const processor = new SubstrateBatchProcessor()
     .setBatchSize(10)
     .setDataSource({
-        chain: "wss://arctic-archive.icenetwork.io:9944",
+        chain: "wss://snow-archive.icenetwork.io",
         archive: `http://${archiveHost}:${archivePort}/graphql`,
     })
     .addEvmLog("*", {
@@ -91,11 +92,11 @@ processor.run(new TypeormDatabase(), async ctx => {
                         );
                         transfersData.push(...transfersBatch);
                         break;
+                    
                     default:
                 }
             }
         }
     }
-    console.log(transfersData);
     await saveTransfers(ctx, transfersData);
 });
